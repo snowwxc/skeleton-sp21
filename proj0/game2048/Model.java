@@ -1,7 +1,6 @@
 package game2048;
 
-import java.util.Formatter;
-import java.util.Observable;
+import java.util.*;
 
 
 /** The state of a game of 2048.
@@ -107,10 +106,17 @@ public class Model extends Observable {
      *    and the trailing tile does not.
      * */
     public boolean tilt(Side side) {
-        boolean changed;
-        changed = false;
+        boolean changed = false;
+//      what helper methods would be useful?
+        changed = shiftToSide(side);
+        boolean merged = MergeTiles(side);
+        if (merged) {
+            shiftToSide(side);
+            changed = true;//don't forget this line. Edge case is no shift but can merge.
+        }
+        //if adjacent in the direction of side
 
-        // TODO: Modify this.board (and perhaps this.score) to account
+        // TODO: Modify this.board (and perhaps this.scor2q１e) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
 
@@ -118,8 +124,189 @@ public class Model extends Observable {
         if (changed) {
             setChanged();
         }
+
         return changed;
     }
+
+    public boolean MergeTiles(Side side) {
+        boolean merged = false;
+        int s = board.size();
+                switch (side) {
+                    case NORTH -> {
+                        //start at top left, going top to bottom
+                        for (int i=0; i<s;i++) {
+                            for (int j=s-1;j>=0;j--) {
+                                if (board.tile(i, j) != null
+                                        && j-1>=0
+                                        && board.tile(i, j-1) != null
+                                        && board.tile(i, j).value() == board.tile(i, j-1).value() ) {
+                                    Tile t = board.tile(i, j-1);//merge bottom to top
+                                    merged = board.move(i,j,t);
+                                    int val = 2* t.value();
+                                    score+= val;
+                                }
+                            }
+                        }
+                    }
+
+                    case SOUTH -> {
+                        //start at bottom left, going bottom to top
+                        for (int i=0; i<s;i++) {
+                            for (int j=0;j<s;j++) {
+                                if (board.tile(i, j) != null
+                                        && j+1 < s
+                                        && board.tile(i, j+1) != null
+                                        && board.tile(i, j).value() == board.tile(i, j+1).value()
+                                ) {
+                                    Tile t = board.tile(i, j+1);//merge top to bottom
+                                    merged = board.move(i,j,t);
+                                    int val = 2* t.value();
+                                    score+= val;
+                                }
+                            }
+                        }
+                    }
+
+                    case EAST -> {
+                        //start at top right, check right to left
+                        for (int i=s-1; i>=0;i--) {
+                            for (int j=s-1;j>=0;j--) {
+                                if (board.tile(i, j) != null
+                                        && i-1 >=0
+                                        && board.tile(i-1, j) != null
+                                        && board.tile(i, j).value() == board.tile(i-1, j).value()
+                                ) {
+                                    Tile t = board.tile(i-1, j);//merge left to right
+                                    merged = board.move(i,j,t);
+                                    int val = 2* t.value();
+                                    score+= val;
+
+                                }
+                            }
+                        }
+                    }
+
+                    case WEST -> {
+                        //start at top left
+                        for (int i=0; i<s;i++) {
+                            for (int j=s-1;j>=0;j--) {
+                                if (board.tile(i, j) != null
+                                        && i+1 < s
+                                        && board.tile(i+1, j) != null
+                                        && board.tile(i, j).value() == board.tile(i+1, j).value()
+                                ) {
+                                    Tile t = board.tile(i+1, j);//merge right to left
+                                    merged = board.move(i,j,t);
+                                    int val = 2* t.value();
+                                    score+= val;
+                                }
+                            }
+                        }
+
+
+                    }
+
+
+                }
+        return merged;
+    }
+
+    public boolean shiftToSide(Side side) {
+        boolean changed;
+        changed = false;
+
+        int cursor = 0;
+        int s = board.size();
+                switch (side) {
+                    case NORTH -> {
+                        for (int i=0; i<s;i++) {
+                            cursor = s - 1;
+
+                            while(cursor >= 0 && board.tile(i, cursor) != null)
+                            {
+                                cursor -= 1;
+                            }
+                            for (int j=s-1;j>=0;j--) {
+                                Tile current = board.tile(i, j);
+                                if(current != null && current.row() < cursor)
+                                {
+                                    if(current.row() != cursor)
+                                    {
+                                        changed = true;
+                                    }
+                                    board.move(i, cursor, current);
+                                    cursor -= 1;
+                                }
+                            }}
+
+                    }
+                    case SOUTH -> {
+                        for (int i=0; i<s;i++) {
+                            cursor = 0;
+                            while(cursor < s && board.tile(i, cursor) != null)
+                            {
+                                cursor += 1;
+                            }
+                            for (int j=0;j<s;j++) {
+                                Tile current = board.tile(i, j);
+                                if(current != null && current.row() > cursor)
+                                {
+                                    if(current.row() != cursor)
+                                    {
+                                        changed = true;
+                                    }
+                                    board.move(i, cursor, current);
+                                    cursor += 1;
+                                }
+                            }}
+
+                    }
+                    case WEST -> {
+                        for (int i=0; i<s;i++) {
+                            cursor = 0;
+                            while(cursor <= s && board.tile(cursor, i) != null)
+                            {
+                                cursor += 1;
+                            }
+                            for (int j= 0; j < s; j++) {
+                                Tile current = board.tile(j, i);
+                                if(current != null && current.col() > cursor)
+                                {
+                                    if(current.col() != cursor)
+                                    {
+                                        changed = true;
+                                    }
+                                    board.move(cursor, i, current);
+                                    cursor += 1;
+                                }
+                            }}
+                    }
+                    case EAST -> {
+                        for (int i=s-1; i>=0;i--) {
+                            cursor = s - 1;
+                            while(cursor >= 0 && board.tile(cursor, i) != null)
+                            {
+                                cursor -= 1;
+                            }
+                            for (int j=s-1;j>=0;j--) {
+                                Tile current = board.tile(j, i);
+                                if(current != null && current.col() < cursor)
+                                {
+                                    if(current.col() != cursor)
+                                    {
+                                        changed = true;
+                                    }
+                                    board.move(cursor, i, current);
+                                    cursor -= 1;
+                                }
+                            }}
+                    }
+
+        }
+        return changed;
+    }
+
+
 
     /** Checks if the game is over and sets the gameOver variable
      *  appropriately.
@@ -138,6 +325,17 @@ public class Model extends Observable {
      * */
     public static boolean emptySpaceExists(Board b) {
         // TODO: Fill in this function.
+//        For this method, you’ll want to use the tile(int col, int row)
+//        and size() methods of the Board class. No other methods are
+//        necessary.
+        int s = b.size();
+        for (int i=0; i<s;i++) {
+            for (int j=0;j<s;j++) {
+                if (b.tile(i, j) == null) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -148,6 +346,15 @@ public class Model extends Observable {
      */
     public static boolean maxTileExists(Board b) {
         // TODO: Fill in this function.
+        int s = b.size();
+        for (int i=0; i<s;i++) {
+            for (int j=0;j<s;j++) {
+
+                if ( b.tile(i, j) != null && b.tile(i, j).value()==MAX_PIECE) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -159,6 +366,23 @@ public class Model extends Observable {
      */
     public static boolean atLeastOneMoveExists(Board b) {
         // TODO: Fill in this function.
+        int s = b.size();
+        if (emptySpaceExists(b) && !maxTileExists(b)){
+            return true;
+        }
+
+        for (int i=0; i<s;i++) {
+            for (int j=0;j<s;j++) {
+                if (b.tile(i,j) != null && i+1<s && b.tile(i+1,j) != null) {
+                    if (b.tile(i,j).value() ==b.tile(i+1,j).value()) { return true;}
+                }
+
+                if (b.tile(i,j) != null && j+1<s && b.tile(i,j+1) != null) {
+                    if (b.tile(i,j).value() ==b.tile(i,j+1).value()) { return true;}
+                }
+            }
+        }
+
         return false;
     }
 

@@ -150,8 +150,11 @@ public class TestModel extends TestUtils {
                 {0, 0, 4, 4},
         };
         updateModel(before, 0, 0, false);
+        System.out.println("updated model");
         String prevBoard = model.toString();
-        boolean changed = model.tilt(Side.EAST);
+        System.out.println("prevBoard");
+        boolean changed = model.tilt(Side.EAST);//problem
+        System.out.println("changed");
         checkChanged(Side.EAST, true, changed);
         checkModel(after, 4, 0, prevBoard, Side.EAST);
     }
